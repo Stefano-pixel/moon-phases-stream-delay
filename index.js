@@ -1,22 +1,23 @@
-import http from 'http';
-import { Readable, Writable, pipeline } from 'stream';
-import emoji from 'node-emoji';
+import http from "http";
+import net from "net";
+import { Readable, Writable, pipeline } from "stream";
+import emoji from "node-emoji";
 class MoonPhasesStream extends Readable {
-  constructor (options) {
+  constructor(options) {
     super(options);
     this.moonPhases = [];
     this.index = 0;
-    this.moonPhases.push(emoji.get(':full_moon:'));
-    this.moonPhases.push(emoji.get(':waning_gibbous_moon:'));
-    this.moonPhases.push(emoji.get(':last_quarter_moon:'));
-    this.moonPhases.push(emoji.get(':waning_crescent_moon:'));
-    this.moonPhases.push(emoji.get(':new_moon:'));
-    this.moonPhases.push(emoji.get(':waxing_crescent_moon:'));
-    this.moonPhases.push(emoji.get(':first_quarter_moon:'));
-    this.moonPhases.push(emoji.get(':moon:'));
+    this.moonPhases.push(emoji.get(":full_moon:"));
+    this.moonPhases.push(emoji.get(":waning_gibbous_moon:"));
+    this.moonPhases.push(emoji.get(":last_quarter_moon:"));
+    this.moonPhases.push(emoji.get(":waning_crescent_moon:"));
+    this.moonPhases.push(emoji.get(":new_moon:"));
+    this.moonPhases.push(emoji.get(":waxing_crescent_moon:"));
+    this.moonPhases.push(emoji.get(":first_quarter_moon:"));
+    this.moonPhases.push(emoji.get(":moon:"));
   }
 
-  _read () {
+  _read() {
     const LAST_MOON_PHASE = 8;
     const FIRST_MOON_PHASE = 0;
     this.push(this.moonPhases[this.index++]);
@@ -26,21 +27,31 @@ class MoonPhasesStream extends Readable {
   }
 }
 
-function sleep(milliseconds){
+function sleep(milliseconds) {
   let currentTime = new Date().getTime();
-  while(currentTime + milliseconds >= new Date().getTime()){}
+  while (currentTime + milliseconds >= new Date().getTime()) {}
 }
-const server = http.createServer((req, risposta) => {
+// const server = http.createServer((req, risposta) => {
+//   const moonPhasesStream = new MoonPhasesStream();
+//   moonPhasesStream.on("data", function (chunk) {
+//     let canReadNext = risposta.write(chunk);
+//     if (!canReadNext) {
+//       sleep(1000);
+//       moonPhasesStream.pause();
+//       risposta.once("drain", () => moonPhasesStream.resume());
+//     }
+//   });
+// });
+
+var serverNet = net.createServer(function (socket) {
+  // Headers:
+  socket.write("HTTP/1.0 200 OK\r\n" + "\r\n");
   const moonPhasesStream = new MoonPhasesStream();
-  moonPhasesStream.on("data", function(chunk){
-    let canReadNext = risposta.write(chunk);
-    if(!canReadNext){
-      sleep(1000)
-      moonPhasesStream.pause()
-      risposta.once("drain", ()=> moonPhasesStream.resume())
-    }
-  })
+  moonPhasesStream.on("data", function (chunk) {
+    sleep(1000);
+    let canReadNext = socket.write(chunk);
+  });
 });
 
-server.listen(3000, ()=> console.log("server running"));
-
+serverNet.listen(3000, () => console.log("server running"));
+// server.listen(3000, () => console.log("server running"));
